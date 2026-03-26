@@ -393,9 +393,13 @@ async def main_macro_loop(driver, interval_minutes: int):
         for resve_id, court_name in TENNIS_COURTS.items():
             if stop_event.is_set(): break
             
+            print(f"🔎 {court_name} 확인 중...", flush=True)
             if navigate_to_reservation_page(driver, resve_id):
                 available_slots = extract_available_slots(driver)
                 if available_slots:
+                    for d_num, t_list in available_slots.items():
+                        print(f"   📅 {d_num}일: {', '.join(t_list)}")
+                        
                     for date_num, times in available_slots.items():
                         try:
                             t_year, t_month = get_year_month_from_court(court_name, now)
@@ -417,6 +421,7 @@ async def main_macro_loop(driver, interval_minutes: int):
         if all_available_slots:
             all_available_slots.sort(key=lambda x: x['date_num'])
             found_msg = f"✨ 총 {len(all_available_slots)}개의 예약 가능 주말 슬롯 발견. 바로 캡차 예약을 시도합니다!"
+            send_telegram_msg(found_msg)
             print(found_msg)
             
             for slot in all_available_slots:
@@ -426,7 +431,10 @@ async def main_macro_loop(driver, interval_minutes: int):
                     break
         
         if not found_reservation:
-            print("ℹ️ 예약 가능한 슬롯이 없거나 시도 실패로 대기합니다.")
+            wait_msg = f"ℹ️ 완료: 예약 가능한 주말 타겟 슬롯이 없습니다. (다음 스캔까지 {interval_minutes}분 대기)"
+            print(wait_msg)
+            # 텔레그램으로도 조용히 생존 신고 날리기
+            send_telegram_msg(f"🤖 [생존 안내] 1회 스캔 완료 / 주말 겟(Get) 대상 없음 / 정상 감시 중...👀")
 
         # 대기 시간 (interval) 쪼개서 대기
         for _ in range(interval_minutes * 6): 
