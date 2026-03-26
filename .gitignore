@@ -1,0 +1,12 @@
+# Backend
+/backend/__pycache__/
+/backend/venv/
+*.pyc
+
+# Env
+.env
+
+# Frontend 
+# (frontend 쪽은 이미 자체 .gitignore 가 있지만 루트에도 안전망 추가)
+/frontend/node_modules/
+/frontend/.next/
