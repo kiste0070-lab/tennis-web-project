@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-import asyncio
+import threading
 
 # bot.py에서 가져올 함수들
 from bot import run_tennis_bot, stop_tennis_bot
@@ -37,7 +37,7 @@ async def start_bot(req: StartRequest):
     BOT_STATUS["interval"] = req.interval_minutes
     
     # 백그라운드로 봇 실행
-    asyncio.create_task(run_tennis_bot(req.interval_minutes))
+    threading.Thread(target=run_tennis_bot, args=(req.interval_minutes,), daemon=True).start()
     
     print(f"🚀 웹에서 시작 요청 받음! 주기: {req.interval_minutes}분")
     return {"status": "success", "msg": f"테니스 예약 봇이 {req.interval_minutes}분 주기로 가동을 시작했습니다!"}

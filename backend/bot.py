@@ -1,4 +1,4 @@
-import asyncio
+import threading
 import time
 import os
 import re
@@ -19,7 +19,7 @@ TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN", "439484740:AAGfGbl5auRZx76fApIJdR59
 TELEGRAM_USER_ID = os.getenv("TELEGRAM_USER_ID", "54702802")
 
 # 중지 신호를 받는 전역 변수
-stop_event = asyncio.Event()
+stop_event = threading.Event()
 
 # 전역 설정
 TENNIS_COURTS = {
@@ -309,23 +309,23 @@ def perform_reservation(driver, resve_id, date_num, court_name, target_times):
         return False
 # -----------------------------------------------------
 
-async def login_and_wait(driver):
+def login_and_wait(driver):
     """용인시 테니스장 접속 후 PASS 앱 간편인증 창 띄우기"""
     URL = "https://publicsports.yongin.go.kr/publicsports/sports/index.do"
     wait = WebDriverWait(driver, 15)
     
     driver.get(URL)
-    await asyncio.sleep(2)
+    time.sleep(2)
     
     try:
         # 로그인 진행 로직
         personal_login = wait.until(EC.element_to_be_clickable((By.XPATH, "//a[@id='GNB_LOGIN_ANCHOR' and contains(@href, 'groupYn=N')]")))
         personal_login.click()
-        await asyncio.sleep(1)
+        time.sleep(1)
 
         phone_auth = wait.until(EC.element_to_be_clickable((By.XPATH, "//*[contains(text(),'휴대폰 인증') or contains(text(),'휴대폰인증')]")))
         phone_auth.click()
-        await asyncio.sleep(1)
+        time.sleep(1)
 
         main_window = driver.current_window_handle
         WebDriverWait(driver, 10).until(EC.number_of_windows_to_be(2))
@@ -337,7 +337,7 @@ async def login_and_wait(driver):
         wait = WebDriverWait(driver, 10)
         kt_mvno = wait.until(EC.element_to_be_clickable((By.XPATH, "//button[contains(@onclick,'KTM')]")))
         driver.execute_script("arguments[0].click();", kt_mvno)
-        await asyncio.sleep(1)
+        time.sleep(1)
 
         qr_auth = wait.until(EC.element_to_be_clickable((By.XPATH, "//*[contains(text(),'QR코드 인증') or contains(text(),'간편인증')]")))
         qr_auth.click()
@@ -346,7 +346,7 @@ async def login_and_wait(driver):
         driver.execute_script("arguments[0].click();", agree_chk)
         next_btn = wait.until(EC.element_to_be_clickable((By.XPATH, "//button[text()='다음'] | //a[text()='다음'] | //input[@value='다음']")))
         next_btn.click()
-        await asyncio.sleep(3)
+        time.sleep(3)
 
         # 캡처 저장 후 전송
         screenshot_path = "auth_screen.png"
@@ -364,12 +364,12 @@ async def login_and_wait(driver):
         for _ in range(24): 
             if stop_event.is_set():
                 break
-            await asyncio.sleep(5)
+            time.sleep(5)
 
         try:
             driver.switch_to.window(main_window)
             driver.refresh()
-            await asyncio.sleep(2)
+            time.sleep(2)
         except:
             pass
         
@@ -380,7 +380,7 @@ async def login_and_wait(driver):
         send_telegram_msg(f"❌ 로그인 과정 중 오류 발생:\n{e}")
         return False
 
-async def main_macro_loop(driver, interval_minutes: int):
+def main_macro_loop(driver, interval_minutes: int):
     """무한 반복 매크로 모니터링 로직"""
     status_msg = f"🚀 실전 예약 매크로 감시 시작 (주기: {interval_minutes}분)"
     print(status_msg)
@@ -415,7 +415,7 @@ async def main_macro_loop(driver, interval_minutes: int):
                                     })
                         except:
                             continue
-                await asyncio.sleep(0.5)
+                time.sleep(0.5)
 
         found_reservation = False
         if all_available_slots:
@@ -440,16 +440,16 @@ async def main_macro_loop(driver, interval_minutes: int):
         for _ in range(interval_minutes * 6): 
             if stop_event.is_set():
                 break
-            await asyncio.sleep(10)
+            time.sleep(10)
 
-async def run_tennis_bot(interval_minutes: int):
+def run_tennis_bot(interval_minutes: int):
     stop_event.clear()
     driver = None
     try:
         driver = get_headless_driver()
-        login_success = await login_and_wait(driver)
+        login_success = login_and_wait(driver)
         if login_success and not stop_event.is_set():
-            await main_macro_loop(driver, interval_minutes)
+            main_macro_loop(driver, interval_minutes)
     except Exception as e:
         print(f"매크로 서버 에러: {e}")
     finally:
