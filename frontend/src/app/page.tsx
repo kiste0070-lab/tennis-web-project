@@ -8,7 +8,7 @@ export default function Home() {
   const [message, setMessage] = useState('');
 
   // 렌더 서버 주소 (추후 Render.com 배포 후 해당 주소로 변경 필요합니다!)
-  const API_URL = 'http://localhost:8000'; 
+  const API_URL = 'https://tennis-reserve-server.onrender.com'; 
 
   const startBot = async () => {
     setLoading(true);
