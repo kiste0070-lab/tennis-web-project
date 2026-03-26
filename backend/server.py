@@ -12,7 +12,7 @@ app = FastAPI(title="테니스 자동 예약 봇 API")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"], # 나중에 Vercel 도메인으로 제한 가능
-    allow_credentials=True,
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
