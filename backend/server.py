@@ -3,8 +3,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import asyncio
 
-# 나중에 만들어질 bot.py 에서 가져올 함수들 (미리 정의)
-# from bot import run_tennis_bot, stop_tennis_bot, is_running
+# bot.py에서 가져올 함수들
+from bot import run_tennis_bot, stop_tennis_bot
 
 app = FastAPI(title="테니스 자동 예약 봇 API")
 
@@ -36,8 +36,8 @@ async def start_bot(req: StartRequest):
     BOT_STATUS["running"] = True
     BOT_STATUS["interval"] = req.interval_minutes
     
-    # 여기서 백그라운드로 'main.py'의 무한 루프 로직을 실행시킬 예정입니다.
-    # asyncio.create_task(run_tennis_bot(req.interval_minutes))
+    # 백그라운드로 봇 실행
+    asyncio.create_task(run_tennis_bot(req.interval_minutes))
     
     print(f"🚀 웹에서 시작 요청 받음! 주기: {req.interval_minutes}분")
     return {"status": "success", "msg": f"테니스 예약 봇이 {req.interval_minutes}분 주기로 가동을 시작했습니다!"}
@@ -49,7 +49,7 @@ def stop_bot():
     
     BOT_STATUS["running"] = False
     BOT_STATUS["interval"] = 0
-    # stop_tennis_bot()
+    stop_tennis_bot()
     print("🛑 웹에서 정지 요청 받음!")
     return {"status": "success", "msg": "테니스 예약 봇이 정지되었습니다."}
 
